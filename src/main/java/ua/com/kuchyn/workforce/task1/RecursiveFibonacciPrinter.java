@@ -7,7 +7,7 @@ import java.util.Arrays;
  * User: viktor
  * Date: 5/10/15
  */
-public class RecursiveFibonacciPrinter{
+public class RecursiveFibonacciPrinter implements FibonacciPrinter{
 
 	private final PrintStream printStream;
 
