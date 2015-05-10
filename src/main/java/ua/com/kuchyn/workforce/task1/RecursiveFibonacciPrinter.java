@@ -23,6 +23,15 @@ public class RecursiveFibonacciPrinter implements FibonacciPrinter {
 		if (length <= 0) {
 			throw new IllegalArgumentException("Length must be greater than zero");
 		}
-		printStream.print("0,");
+		if (length == 1) {
+			printStream.print("0,");
+		} else if (length == 2) {
+			printStream.print("0, 1,");
+		} else {
+
+		}
+
+
 	}
+
 }

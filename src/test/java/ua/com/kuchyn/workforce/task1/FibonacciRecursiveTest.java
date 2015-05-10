@@ -39,6 +39,14 @@ public class FibonacciRecursiveTest {
 	}
 
 	@Test
+	public void shouldPrintZeroOneForLengthTwo() throws Exception {
+		fibonacciPrinter.printFibonacciSequence(2);
+
+		String printed = new String(out.toByteArray());
+		assertThat(printed, is("0, 1,"));
+	}
+
+	@Test
 	public void expectIllegalArgumentExceptionWhenLengthIsZero() throws Exception {
 		ex.expect(IllegalArgumentException.class);
 
