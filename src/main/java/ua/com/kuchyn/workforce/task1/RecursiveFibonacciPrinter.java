@@ -7,7 +7,7 @@ import java.util.Arrays;
  * User: viktor
  * Date: 5/10/15
  */
-public class RecursiveFibonacciPrinter implements FibonacciPrinter {
+public class RecursiveFibonacciPrinter{
 
 	private final PrintStream printStream;
 
@@ -19,7 +19,6 @@ public class RecursiveFibonacciPrinter implements FibonacciPrinter {
 		this.printStream = printStream;
 	}
 
-	@Override
 	public void printFibonacciSequence(int length) {
 		if (length <= 0) {
 			throw new IllegalArgumentException("Length must be greater than zero");

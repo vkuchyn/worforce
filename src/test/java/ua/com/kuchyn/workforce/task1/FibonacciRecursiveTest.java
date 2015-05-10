@@ -29,7 +29,7 @@ public class FibonacciRecursiveTest {
 	public void setUp() throws Exception {
 		out = new ByteArrayOutputStream();
 		PrintStream printStream = new PrintStream(out);
-		fibonacciPrinter = new RecursiveFibonacciPrinter(printStream);
+		fibonacciPrinter = new IterativeFibonacciPrinter(printStream);
 	}
 
 	@Test
@@ -45,7 +45,7 @@ public class FibonacciRecursiveTest {
 		fibonacciPrinter.printFibonacciSequence(2);
 
 		String printed = new String(out.toByteArray());
-		assertThat(printed, containsString("0, 1"));
+		assertThat(printed, containsString("1"));
 	}
 
 	@Test
