@@ -1,5 +1,6 @@
 package ua.com.kuchyn.workforce.task1;
 
+import org.hamcrest.core.StringContains;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -35,7 +37,7 @@ public class FibonacciRecursiveTest {
 		fibonacciPrinter.printFibonacciSequence(1);
 
 		String printed = new String(out.toByteArray());
-		assertThat(printed, is("0,"));
+		assertThat(printed, containsString("0"));
 	}
 
 	@Test
@@ -43,7 +45,15 @@ public class FibonacciRecursiveTest {
 		fibonacciPrinter.printFibonacciSequence(2);
 
 		String printed = new String(out.toByteArray());
-		assertThat(printed, is("0, 1,"));
+		assertThat(printed, containsString("0, 1"));
+	}
+
+	@Test
+	public void shouldPrintFibonacciSequenceForTen() throws Exception {
+		fibonacciPrinter.printFibonacciSequence(10);
+
+		String printed = new String(out.toByteArray());
+		assertThat(printed, containsString("0, 1, 1, 2, 3, 5, 8, 13, 21, 34"));
 	}
 
 	@Test

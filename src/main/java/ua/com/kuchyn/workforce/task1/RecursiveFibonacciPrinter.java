@@ -1,6 +1,7 @@
 package ua.com.kuchyn.workforce.task1;
 
 import java.io.PrintStream;
+import java.util.Arrays;
 
 /**
  * User: viktor
@@ -19,19 +20,27 @@ public class RecursiveFibonacciPrinter implements FibonacciPrinter {
 	}
 
 	@Override
-	public void printFibonacciSequence(long length) {
+	public void printFibonacciSequence(int length) {
 		if (length <= 0) {
 			throw new IllegalArgumentException("Length must be greater than zero");
 		}
+
+		long[] fibonacciArray = new long[length];
+		fibonacci(length, fibonacciArray);
+		printStream.print(Arrays.toString(fibonacciArray));
+	}
+
+	private long fibonacci(int length, long[] fibonacciArray) {
+		long fib;
 		if (length == 1) {
-			printStream.print("0,");
+			fib = 0;
 		} else if (length == 2) {
-			printStream.print("0, 1,");
+			fib = fibonacci(1, fibonacciArray) + 1;
 		} else {
-
+			fib = fibonacci(length - 1, fibonacciArray) + fibonacci(length - 2, fibonacciArray);
 		}
-
-
+		fibonacciArray[length - 1] = fib;
+		return fib;
 	}
 
 }

@@ -6,6 +6,6 @@ package ua.com.kuchyn.workforce.task1;
  */
 public interface FibonacciPrinter {
 
-	public void printFibonacciSequence(long n);
+	public void printFibonacciSequence(int n);
 
 }
