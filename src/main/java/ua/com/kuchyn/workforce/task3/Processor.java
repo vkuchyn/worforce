@@ -1,12 +1,19 @@
 package ua.com.kuchyn.workforce.task3;
 
+import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * User: viktor
  * Date: 5/11/15
  */
 public class Processor<T> {
-	private final IRequestHandler<T> requestHandler;
-	private final int maxThreads;
+
+	private BlockingQueue<T> queue = new LinkedBlockingQueue<>();
+	private final ProcessorThread processorThread;
+
+	private Logger logger = Logger.getLogger(Processor.class.getCanonicalName());
 
 	/**
 	 * Processes requests from the queue with no more than
@@ -20,9 +27,8 @@ public class Processor<T> {
 	 * @param maxThreads - total number of threads
 	 */
 	public Processor(IRequestHandler<T> rh, int maxThreads) {
-
-		this.requestHandler = rh;
-		this.maxThreads = maxThreads;
+		processorThread = new ProcessorThread(rh, maxThreads);
+		processorThread.start();
 	}
 
 	/**
@@ -32,13 +38,7 @@ public class Processor<T> {
 	 * @param o - request object
 	 */
 	public void addRequest(T o) {
-
-		try {
-			requestHandler.processRequests(o);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
+		queue.add(o);
 	}
 
 	/**
@@ -62,4 +62,36 @@ public class Processor<T> {
 	public boolean isShutDown() {
 		throw new UnsupportedOperationException();
 	}
+
+	private class ProcessorThread extends Thread{
+
+		private final IRequestHandler<T> requestHandler;
+		private final ExecutorService executorService;
+
+		private ProcessorThread(IRequestHandler<T> requestHandler, int maxThreads) {
+			this.requestHandler = requestHandler;
+			executorService = new ThreadPoolExecutor(0, maxThreads,
+					0L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+		}
+
+		@Override
+		public void run() {
+			try {
+				final T task = queue.take();
+				executorService.submit(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							requestHandler.processRequests(task);
+						} catch (Exception e) {
+							logger.log(Level.WARNING, "Task " + task.toString() + " failed with error " + e.getMessage(), e);
+						}
+					}
+				});
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 }
