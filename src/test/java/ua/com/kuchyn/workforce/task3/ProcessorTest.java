@@ -2,8 +2,9 @@ package ua.com.kuchyn.workforce.task3;
 
 import org.junit.Test;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.Matchers.lessThan;
@@ -16,20 +17,20 @@ import static org.junit.Assert.assertThat;
  */
 public class ProcessorTest {
 
-	@Test
+	@Test(timeout = 100)
 	public void shouldAddRequestToQueue() throws Exception {
 		CachedRequestHandler requestHandler = new CachedRequestHandler();
-		Processor<String> processor = new Processor<String>(requestHandler, 1);
+		Processor2<String> processor = new Processor2<String>(requestHandler, 1);
 
 		processor.addRequest("Task1");
-
+		requestHandler.countDownLatch.await();
 		assertThat(requestHandler.getProcessedRequest(), hasItem("Task1"));
 	}
 
 	@Test
 	public void shouldNotWaitAfterAddingRequest() throws Exception {
-		CachedRequestHandler requestHandler = new CachedRequestHandler(10);
-		Processor<String> processor = new Processor<String>(requestHandler, 1);
+		CachedRequestHandler requestHandler = new CachedRequestHandler(10, 1);
+		Processor2<String> processor = new Processor2<String>(requestHandler, 1);
 
 		long millisBefore = System.currentTimeMillis();
 		processor.addRequest("Task1");
@@ -37,17 +38,63 @@ public class ProcessorTest {
 
 		assertThat(duration, is(lessThan(10L)));
 	}
+
+	@Test(timeout = 100)
+	public void shouldShutDownInGentleWay() throws Exception {
+		CachedRequestHandler requestHandler = new CachedRequestHandler(20, 1);
+		Processor2<String> processor = new Processor2<String>(requestHandler, 2);
+
+		processor.addRequest("Task1");
+		Thread.sleep(5);
+
+		processor.shutDown(null);
+		processor.addRequest("TaskAfterStop");
+		requestHandler.countDownLatch.await();
+
+		assertThat(processor.isShutDown(), is(true));
+		assertThat(requestHandler.getProcessedRequest(), hasItem("Task1"));
+		assertThat(requestHandler.getProcessedRequest().size(), is(1));
+	}
+
+	@Test(timeout = 100)
+	public void shouldPutTasksToQueueWhenRequestsMoreThanMaxThreads() throws Exception {
+		CachedRequestHandler requestHandler = new CachedRequestHandler(0, 2);
+		Processor2<String> processor = new Processor2<String>(requestHandler, 1);
+
+		processor.addRequest("Task1");
+		processor.addRequest("Task2");
+		requestHandler.countDownLatch.await();
+		assertThat(requestHandler.getProcessedRequest(), hasItem("Task1"));
+		assertThat(requestHandler.getProcessedRequest(), hasItem("Task2"));
+	}
+
+	@Test
+	public void shouldFinishAllTasksAfterShutDown() throws Exception {
+		CachedRequestHandler requestHandler = new CachedRequestHandler(10, 2);
+		Processor2<String> processor = new Processor2<>(requestHandler, 1);
+
+		processor.addRequest("Task1");
+		processor.addRequest("Task2");
+		processor.shutDown(null);
+		requestHandler.countDownLatch.await();
+		assertThat(requestHandler.getProcessedRequest(), hasItem("Task1"));
+		assertThat(requestHandler.getProcessedRequest(), hasItem("Task2"));
+
+	}
 }
 
 class CachedRequestHandler implements IRequestHandler<String> {
 
-	private Set<String> processedRequest = new HashSet<String>();
+	private Set<String> processedRequest = new ConcurrentSkipListSet<>();
 	private int millis = 0;
+	CountDownLatch countDownLatch;
 
 	CachedRequestHandler() {
+		countDownLatch = new CountDownLatch(1);
 	}
 
-	CachedRequestHandler(int millis) {
+	CachedRequestHandler(int millis, int countDownSize) {
+		countDownLatch = new CountDownLatch(countDownSize);
 		this.millis = millis;
 	}
 
@@ -57,8 +104,9 @@ class CachedRequestHandler implements IRequestHandler<String> {
 
 	@Override
 	public void processRequests(String o) throws Exception {
+		processedRequest.add(o);
 		System.out.println(o);
 		Thread.sleep(millis);
-		processedRequest.add(o);
+		countDownLatch.countDown();
 	}
 }

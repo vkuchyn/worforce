@@ -14,6 +14,8 @@ public class Processor<T> {
 	private final ProcessorThread processorThread;
 
 	private Logger logger = Logger.getLogger(Processor.class.getCanonicalName());
+	private volatile boolean stop = false;
+	private final ExecutorService executorService;
 
 	/**
 	 * Processes requests from the queue with no more than
@@ -27,7 +29,11 @@ public class Processor<T> {
 	 * @param maxThreads - total number of threads
 	 */
 	public Processor(IRequestHandler<T> rh, int maxThreads) {
-		processorThread = new ProcessorThread(rh, maxThreads);
+
+		executorService = new ThreadPoolExecutor(0, maxThreads,
+				0L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+
+		processorThread = new ProcessorThread(rh);
 		processorThread.start();
 	}
 
@@ -38,7 +44,8 @@ public class Processor<T> {
 	 * @param o - request object
 	 */
 	public void addRequest(T o) {
-		queue.add(o);
+		if (!stop)
+			queue.add(o);
 	}
 
 	/**
@@ -51,7 +58,8 @@ public class Processor<T> {
 	 *          this object upon successful shutdown
 	 */
 	public void shutDown(Object o) {
-
+		stop = true;
+		executorService.shutdown();
 	}
 
 	/**
@@ -60,36 +68,36 @@ public class Processor<T> {
 	 * @returns true if the processor is shut down
 	 */
 	public boolean isShutDown() {
-		throw new UnsupportedOperationException();
+		return stop;
 	}
 
 	private class ProcessorThread extends Thread{
 
 		private final IRequestHandler<T> requestHandler;
-		private final ExecutorService executorService;
 
-		private ProcessorThread(IRequestHandler<T> requestHandler, int maxThreads) {
+		private ProcessorThread(IRequestHandler<T> requestHandler) {
 			this.requestHandler = requestHandler;
-			executorService = new ThreadPoolExecutor(0, maxThreads,
-					0L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+			setName("ProcessorThread");
 		}
 
 		@Override
 		public void run() {
-			try {
-				final T task = queue.take();
-				executorService.submit(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							requestHandler.processRequests(task);
-						} catch (Exception e) {
-							logger.log(Level.WARNING, "Task " + task.toString() + " failed with error " + e.getMessage(), e);
+			while (!stop || queue.size() != 0) {
+				try {
+					final T task = queue.take();
+					executorService.submit(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								requestHandler.processRequests(task);
+							} catch (Exception e) {
+								logger.log(Level.WARNING, "Task " + task.toString() + " failed with error " + e.getMessage(), e);
+							}
 						}
-					}
-				});
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+					});
+				} catch (InterruptedException e) {
+					break;
+				}
 			}
 		}
 	}
