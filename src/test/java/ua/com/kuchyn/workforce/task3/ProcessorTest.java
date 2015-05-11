@@ -20,7 +20,7 @@ public class ProcessorTest {
 	@Test(timeout = 100)
 	public void shouldAddRequestToQueue() throws Exception {
 		CachedRequestHandler requestHandler = new CachedRequestHandler();
-		Processor2<String> processor = new Processor2<String>(requestHandler, 1);
+		Processor<String> processor = new Processor<>(requestHandler, 1);
 
 		processor.addRequest("Task1");
 		requestHandler.countDownLatch.await();
@@ -30,7 +30,7 @@ public class ProcessorTest {
 	@Test
 	public void shouldNotWaitAfterAddingRequest() throws Exception {
 		CachedRequestHandler requestHandler = new CachedRequestHandler(10, 1);
-		Processor2<String> processor = new Processor2<String>(requestHandler, 1);
+		Processor<String> processor = new Processor<>(requestHandler, 1);
 
 		long millisBefore = System.currentTimeMillis();
 		processor.addRequest("Task1");
@@ -42,7 +42,7 @@ public class ProcessorTest {
 	@Test(timeout = 100)
 	public void shouldShutDownInGentleWay() throws Exception {
 		CachedRequestHandler requestHandler = new CachedRequestHandler(20, 1);
-		Processor2<String> processor = new Processor2<String>(requestHandler, 2);
+		Processor<String> processor = new Processor<>(requestHandler, 2);
 
 		processor.addRequest("Task1");
 		Thread.sleep(5);
@@ -59,7 +59,7 @@ public class ProcessorTest {
 	@Test(timeout = 100)
 	public void shouldPutTasksToQueueWhenRequestsMoreThanMaxThreads() throws Exception {
 		CachedRequestHandler requestHandler = new CachedRequestHandler(0, 2);
-		Processor2<String> processor = new Processor2<String>(requestHandler, 1);
+		Processor<String> processor = new Processor<>(requestHandler, 1);
 
 		processor.addRequest("Task1");
 		processor.addRequest("Task2");
@@ -68,10 +68,10 @@ public class ProcessorTest {
 		assertThat(requestHandler.getProcessedRequest(), hasItem("Task2"));
 	}
 
-	@Test
+	@Test(timeout = 100)
 	public void shouldFinishAllTasksAfterShutDown() throws Exception {
 		CachedRequestHandler requestHandler = new CachedRequestHandler(10, 2);
-		Processor2<String> processor = new Processor2<>(requestHandler, 1);
+		Processor<String> processor = new Processor<>(requestHandler, 1);
 
 		processor.addRequest("Task1");
 		processor.addRequest("Task2");
