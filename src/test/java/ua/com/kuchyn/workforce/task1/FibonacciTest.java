@@ -17,7 +17,7 @@ import static org.junit.Assert.assertThat;
  * User: viktor
  * Date: 5/10/15
  */
-public class FibonacciRecursiveTest {
+public class FibonacciTest {
 
 	private FibonacciPrinter fibonacciPrinter;
 
@@ -29,7 +29,7 @@ public class FibonacciRecursiveTest {
 	public void setUp() throws Exception {
 		out = new ByteArrayOutputStream();
 		PrintStream printStream = new PrintStream(out);
-		fibonacciPrinter = new IterativeFibonacciPrinter(printStream);
+		fibonacciPrinter = new RecursiveFibonacciPrinter(printStream);
 	}
 
 	@Test
